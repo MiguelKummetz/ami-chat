@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ami-chat</title>
+    <script>
+      import { io } from 'https://cdn.socket.io/4.3.2/socket.io.esm.min.js';
+
+      document.getElementById('loginButton').addEventListener('click', function() {
+              console.log('click')
+
+              // Ocultar formulario de inicio de sesión
+        document.getElementById('loginpage').classList.add('hidden');
+        
+        // Mostrar formulario de chat
+        document.getElementById('chatpage').classList.remove('hidden');
+
+              const username = document.querySelector('.login-form input[type="text"]').value;
+              const password = document.querySelector('.login-form input[type="password"]').value;
+
+              // Realiza la solicitud al backend
+              fetch('/api/login', {
+                method: 'POST',
+                headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+          })
+            .then(response => {
+              console.log('-------response----------------------------------------')
+              // Verifica si la respuesta indica una redirección
+              if (response.redirected) {
+                // Redirige a la nueva ubicación
+                console.log('---------redirect---------');
+                window.location.assign(response.url);
+              } else {
+                // Maneja la respuesta normalmente
+                return response.json({"error": "there ir no redirect"});
+              }
+            })
+            .then(data => {
+              // Aquí puedes manejar la respuesta del backend, por ejemplo, redirigir a otra página
+              console.log('Respuesta del backend:', data);
+              return response.json({"message": "Respuesta del backend:", "data": data});
+            })
+            .catch(error => {
+              console.error('Error al hacer la solicitud:', error);
+            });
+          });
+
+
+
+      const getUsername = async () => {
+        const apiUrl = 'http://localhost:3000/api'; // Reemplaza con la URL de tu API
+        const res = await fetch(`${apiUrl}/users/655aa0514e8d32e79b106bfb`)
+          .then((response) => response.json())
+          .then((data) => console.log('Usuarios:', data))
+          .catch((error) => console.error('Error:', error));
+
+        const { username: randomUsername } = await res.json();
+
+        localStorage.setItem('username', randomUsername);
+        return randomUsername;
+      };
+
+      const socket = io({
+        auth: {
+          token: '1312',
+          username: await getUsername(),
+          serverOffset: 0
+        }
+      });
+
+      const form = document.getElementById('form');
+      const input = document.getElementById('input');
+      const messages = document.getElementById('messages');
+
+      socket.on('chat message', (msg, serverOffset, username) => {
+        const colors = [
+          '#16290a',
+          '#223e0f',
+          '#2d5214',
+          '#386719',
+          '#437b1e',
+          '#4e9023'
+        ];
+        const randomNumber = Math.floor(Math.random() * colors.length);
+
+        const userColor = colors[randomNumber];
+        const item = `<li style="background-color: ${userColor};">
+          <small>${username}</small>
+          <p>${msg}</p>
+          </li>`;
+        messages.insertAdjacentHTML('beforeend', item);
+        socket.auth.serverOffset = serverOffset;
+
+        //scroll to bottom of messages
+        messages.scrollTop = messages.scrollHeight;
+      });
+
+      form.addEventListener('submit', (e) => {
+        console.log('button pressed');
+        e.preventDefault();
+
+        if (input.value) {
+          socket.emit('chat message', input.value);
+          input.value = '';
+        }
+      });
+    </script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      :root {
+        color-scheme: light dark;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          'Open Sans',
+          'Helvetica Neue',
+          sans-serif;
+        display: grid;
+        place-content: center;
+        height: 100vh;
+        padding: 36px 36px 100px 36px;
+        grid-template-rows: 1fr;
+      }
+
+      #messages {
+        list-style-type: none;
+        margin: 0px 0px 0px 1px;
+        padding: 0;
+        overflow-y: scroll;
+        height: 100%;
+        scroll-behavior: smooth;
+        padding-bottom: 42px;
+      }
+
+      #messages > li {
+        border: 1px solid #ccc;
+        padding: 10px 10px 0px 12px;
+        margin: 5px 0;
+        border-radius: 25px;
+        /* background-color: #ff0000; */
+      }
+
+      #messages > li > small {
+        font-size: 14px;
+        font-weight: bold;
+        color: #ffffff5b;
+      }
+
+      #messages > li > p {
+        font-size: 16px;
+        color: #ffffffaf;
+        margin-top: 0.1rem;
+      }
+
+      /* #messages > li:nth-child(odd){
+        background: #2a2a2a;
+        }*/
+
+      #chat {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        overflow: hidden;
+        width: 350px;
+        height: 100%;
+        position: relative;
+      }
+
+      #form {
+        bottom: 0;
+        display: flex;
+        height: 48px;
+        left: 0;
+        padding: 4px;
+        position: absolute;
+        right: 0;
+      }
+
+      #input {
+        border-radius: 9999px;
+        border: 1px solid #eee;
+        flex: 1;
+        margin: 4px;
+        padding: 0 8px;
+      }
+
+      #input:focus {
+        outline: 0;
+      }
+
+      #form > button {
+        background: #4e9023;
+        color: #fff;
+        border: 0;
+        margin: 4px;
+        border-radius: 4px;
+      }
+
+      #from > button:hover {
+        background: #4e9023;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- formulario de login -->
+    <div id="loginpage">
+      <div class="form">
+        <form class="login-form">
+          <input type="text" placeholder="username" />
+          <input type="password" placeholder="password" />
+          <button id="loginButton">login</button>
+          <p class="message">
+            Not registered? <a href="#">Create an account</a>
+          </p>
+        </form>
+        <!-- <form class="register-form">
+        <input type="text" placeholder="username"/>
+        <input type="password" placeholder="password"/>
+        <button>create</button>
+        <p class="message">Already registered? <a href="#">Sign In</a></p>
+      </form> -->
+      </div>
+    </div>
+
+    <!-- formulario de chat -->
+    <section id="chatpage" class="hidden">
+      <ul id="messages"></ul>
+      <form id="form">
+        <input
+          type="text"
+          name="message"
+          id="input"
+          placeholder="Escribe tu mensaje"
+          autocomplete="off"
+        />
+        <button type="submit">Enviar</button>
+      </form>
+    </section>
+  </body>
+</html>

@@ -1,19 +1,63 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ami-chat</title>
-    <link rel="stylesheet" href="style.css">
-    <script type="module" src="index.js"></script>
-</head>
-<body>
-    <section id="chat">
-        <ul id="messages"></ul>
-        <form id="form">
-            <input type="text" name="message" id="input" placeholder="Escribe tu mensaje" autocomplete="off" />
-            <button type="submit">Enviar</button>
+    <script type="module"></script>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+
+      .chat-container {
+        display: none;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          'Open Sans',
+          'Helvetica Neue',
+          sans-serif;
+        display: grid;
+        place-content: center;
+        height: 100vh;
+        padding: 36px 36px 100px 36px;
+        grid-template-rows: 1fr;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="container-header">Iniciar Sesión</div>
+      <div class="login-form">
+        <form id="loginForm">
+          <input type="text" id="username" placeholder="Nombre de Usuario" />
+          <input
+            type="number"
+            id="roomId"
+            placeholder="ID de la room del chat"
+          />
+          <button type="button" id="loginButton">Iniciar sesión</button>
         </form>
-    </section>
-</body>
+      </div>
+    </div>
+    <div class="chat-container">
+      <div class="container-header">Chat de Ejemplo</div>
+      <div class="chat-messages"></div>
+      <div class="message-input">
+        <input type="text" placeholder="Escribe tu mensaje" id="mensaje" />
+        <button id="Enviar">Enviar</button>
+      </div>
+    </div>
+  </body>
 </html>
