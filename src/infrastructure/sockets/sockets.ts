@@ -24,7 +24,7 @@ export default (io: any) => {
       });
       const token = options.headers.Authorization.replace('Bearer ', ''); // Extrae el token del encabezado
       const decodedToken = jwt.verify(token, process.env.SECRET!);
-      console.log(decodedToken);
+
       if (decodedToken !== null) {
         const savedMessage = await newMessage.save();
         io.emit('server:newMessage', savedMessage);
