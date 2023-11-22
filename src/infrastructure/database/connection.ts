@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 //conexion con mongoDB
-export const connectDB = (connectionString: string) => {
+export const connectDB = async (connectionString: string) => {
   mongoose
     .connect(connectionString)
     .then(() => {

@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ami-chat</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module">
+        const socket = io();
+        let verifiedUsername = null;
+        let verifiedToken = null;
+
+        const loginContainer = document.querySelector('.login-container');
+        const chatContainer = document.querySelector('.chat-container');
+        //falta implementar el script del formulario de login
+        document.getElementById('loginButton').addEventListener('click', function () {
+          
+            console.log('click')
+            const username = document.querySelector('.login-form input[type="text"]').value;
+            const password = document.querySelector('.login-form input[type="password"]').value;
+            console.log(username)
+
+/////////////////////////////////////////////////////////////
+            // Realiza la solicitud al backend
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+          })
+            .then(response => {
+              console.log('-----------response-----------')
+              console.log(response)
+              // Verifica si la respuesta indica una redirección
+              if (response.token) {
+                // Redirige a la nueva ubicación
+                console.log('-----------redirect-----------');
+                window.location.assign(response.url);
+              } else {
+                // Maneja la respuesta normalmente
+                return response.json({"error": "there ir no redirect"});
+              }
+            })
+            .then(data => {
+              // Aquí puedes manejar la respuesta del backend, por ejemplo, redirigir a otra página
+              console.log('Respuesta del backend:', data);
+              verifiedUsername = data.username
+              console.log(verifiedUsername);
+              verifiedToken = data.token
+              console.log(verifiedToken);
+              if (verifiedToken) {
+                  loginContainer.style.display = 'none'
+                  chatContainer.style.display = 'flex'
+              }else{
+                alert('Invalid user or password')
+              }
+              return;
+            })
+            .catch(error => {
+              console.error('Error al hacer la solicitud:', error);
+            });
+          });
+////////////////////////////
+        
+
+        //chat
+        //socket functions:
+        const loadMessages = (callback) => {
+            socket.on('server:loadMessages', callback);
+        }
+
+        const saveMessage = (message, newDate, username) => {
+            socket.emit('client:newMessage', { message, newDate, username }, { headers: { Authorization: `Bearer ${verifiedToken}` } })
+        }
+
+        const onNewMessage = (callback) => {
+            socket.on('server:newMessage', callback)
+        }
+
+        //ui functions:
+        const messagesList = document.getElementById('messages');
+        const messagesUi = message => {
+            const li = document.createElement('li')
+            const msg = message.content
+            const usn = message.username
+            li.innerHTML = `
+                <li style="background-color: #2d5214;">
+                    <small>${usn}</small>
+                    <p>${msg}</p>
+                </li>`
+            messages.scrollTop = messages.scrollHeight;
+            return li;
+        }
+        const renderMessages = messages => {
+            messages.forEach(message => messagesList.append(messagesUi(message)))
+        }
+
+        const onHandleSubmit = (event) => {
+            event.preventDefault()
+            const msg = messageForm['input'].value
+            if (msg) {
+                saveMessage(
+                    msg,
+                    new Date(),
+                    verifiedUsername
+                )
+                document.getElementById('input').value = '';
+            }
+        }
+
+        const appendMessage = message => {
+            messagesList.append(messagesUi(message))
+        }
+
+        //main:
+        onNewMessage(appendMessage);
+        loadMessages(renderMessages);
+
+        const messageForm = document.getElementById('messageForm');
+        messageForm.addEventListener('submit', onHandleSubmit);
+
+
+        //         '#16290a',
+        //         '#223e0f',
+        //         '#2d5214',
+        //         '#386719',
+        //         '#437b1e',
+        //         '#4e9023'
+
+
+    </script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            color-scheme: light dark;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            display: grid;
+            place-content: center;
+            height: 100vh;
+            padding: 36px 36px 100px 36px;
+            grid-template-rows: 1fr;
+        }
+
+        /* .login-container,
+        .chat-container {
+            width: 100%;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+        } */
+
+        /* .chat-messages {
+            padding: 10px;
+            flex: 1;
+            overflow-y: scroll;
+        } */
+
+        #messages {
+            list-style-type: none;
+            margin: 0px 0px 0px 1px;
+            padding: 0;
+            overflow-y: scroll;
+            height: 100%;
+            scroll-behavior: smooth;
+            padding-bottom: 42px;
+        }
+
+        #messages>li {
+            border: 1px solid #ccc;
+            padding: 10px 10px 0px 12px;
+            margin: 5px 0;
+            border-radius: 25px;
+            /* background-color: #ff0000; */
+        }
+
+        #messages>li>small {
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffffff5b;
+        }
+
+        #messages>li>p {
+            font-size: 16px;
+            color: #ffffffaf;
+            margin-top: 0.1rem;
+        }
+
+        #chat {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+            width: 350px;
+            height: 100%;
+            position: relative;
+        }
+
+        #messageForm {
+            bottom: 0;
+            display: flex;
+            height: 48px;
+            left: 0;
+            padding: 4px;
+            position: absolute;
+            right: 0;
+        }
+
+        #input {
+            border-radius: 9999px;
+            border: 1px solid #eee;
+            flex: 1;
+            margin: 4px;
+            padding: 0 8px;
+        }
+
+        #input:focus {
+            outline: 0;
+        }
+
+        #messageForm>button {
+            background: #4e9023;
+            color: #fff;
+            border: 0;
+            margin: 4px;
+            border-radius: 4px;
+        }
+
+        #messageForm>button:hover {
+            background: #4e9023;
+        }
+
+        .chat-container {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- formulario de login -->
+    <div class="login-container">
+        <div class="container-header">Iniciar Sesión</div>
+        <div class="login-form">
+            <form id="loginForm">
+                <input type="text" id="username" placeholder="Nombre de Usuario" />
+                <input type="password" id="password" placeholder="password" />
+                <button type="button" id="loginButton">Iniciar sesión</button>
+            </form>
+        </div>
+    </div>
+    <!-- formulario de chat -->
+    <div class="chat-container">
+        <ul id="messages"></ul>
+        <form id="messageForm">
+            <input type="text" name="message" id="input" placeholder="Escribe tu mensaje" autocomplete="off" />
+            <button type="submit">Enviar</button>
+        </form>
+        <!-- <div class="container-header">Header de prueba 🦝</div>
+        <div class="chat-messages" id="messages">Mensaje de prueba</div>
+        <div class="message-input">
+            <input type="text" placeholder="Escribe tu mensaje" id="input" />
+            <button id="Enviar">Enviar</button>
+        </div> -->
+    </div>
+</body>
+
+</html>

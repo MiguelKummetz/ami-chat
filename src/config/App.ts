@@ -1,22 +1,32 @@
 import { connectDB } from '../infrastructure/database/connection';
 import { userRouter } from '../application/routes/UserRoutes';
 import { loginRouter } from '../application/routes/LoginRoutes';
-import { createServer } from 'node:http';
-import { Server } from 'socket.io';
+import http from 'node:http';
+import { Server as WebsocketServer } from 'socket.io';
 // import bodyParser from 'body-parser';
 // import logger from 'morgan';
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import sockets from '../infrastructure/sockets/sockets';
 dotenv.config();
 const connectionString = process.env.DB_URI!;
 connectDB(connectionString);
 
 //server
 const app = express();
-const server = createServer(app);
-const io = new Server(server);
+const server = http.createServer(app);
+const io = new WebsocketServer(server);
+sockets(io);
+// const io = new Server<
+//   ClientToServerEvents,
+//   ServerToClientEvents,
+//   InterServerEvents,
+//   SocketData
+// >(server, {
+//   connectionStateRecovery: {}
+// });
 
 //config
 app.use(cors());
@@ -25,13 +35,7 @@ app.use(express.json());
 // app.use(logger('dev'));
 
 app.get('/', (_req, res) => {
-  console.log('get inicial recibido');
-  res.sendFile(process.cwd() + '/client/chat.html');
-});
-
-io.on('connection', (socket) => {
-  console.log('a user connected');
-  console.log(socket);
+  res.sendFile(process.cwd() + '/public/index.html');
 });
 
 app.use('/api/users', userRouter);
@@ -39,7 +43,7 @@ app.use('/api/login', loginRouter);
 
 const PORT = process.env.PORT;
 
-app.listen(PORT, () =>
+server.listen(PORT, () =>
   console.log(`server running on http://localhost:${PORT}`)
 );
 

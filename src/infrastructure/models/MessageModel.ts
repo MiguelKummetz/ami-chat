@@ -3,7 +3,8 @@ import { Schema, model } from 'mongoose';
 const messageSchema = new Schema({
   userId: Object,
   content: String,
-  creationDate: Date
+  creationDate: Date,
+  username: String
 });
 
 messageSchema.set('toJSON', {
