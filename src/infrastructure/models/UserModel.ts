@@ -20,3 +20,4 @@ userSchema.set('toJSON', {
 });
 
 export const User = model('User', userSchema);
+//mongodb+srv://ami:<pass>@cluster0.kyprtz4.mongodb.net/chat?retryWrites=true&w=majority
